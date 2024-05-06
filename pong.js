@@ -139,15 +139,73 @@ function initGameObjects(){
         color: BALL_COLOR
     }
 }
+// UPDATE HELPERS ---------------------------------------
 
+function collision(b,p){
+    // Calculamos el collider de la pelota
+    b.top = b.y - b.radius;
+    b.bottom = b.y + b.radius;
+    b.left = b.x - b.radius;
+    b.right = b.x + b.radius;
+
+    // Calculamos el collider de la pala
+    p.top = p.y;
+    p.bottom = p.y + p.height;
+    p.left = p.x;
+    p.right = p.x + p.width;
+
+    return b.right > p.left &&
+            b.bottom > p.top &&
+            b.left > p.right &&
+            b.top > p.bottom;
+}
+
+// IA del juego
+const COMPUTER_LEVEL = 0.1;
+
+function updateNPC(){
+    const npc = getPlayers(1);
+
+    npc.y += (ball.y - (npc.y+npc.height/2)) * COMPUTER_LEVEL;
+}
 function update(){
-    console.log("Actualizando estado...");
+    // Si no estamos en modo PLAY, saltamos la actualización
+    if(gameState != gameStateEnum.PLAY) return;
+
+    // Player: actualizamos la posicioón de la bola
+    ball.x += ball.velocityX;
+    ball.y += ball.velocityY;
+
+    // IA: actualizamos la posición de la computadora
+    updateNPC();
+
+    // Si la poelota golpea los laterales del campo, rebotará...
+    if(ball.y+ball.radius > CANVAS_HEIGHT  ||  ball.y-ball.radius < 0){
+        ball.velocityY = -ball.velocityY;
+    }
+    // Verificamos si la pelota golpea alguna pala...
+    var whatPlayer = (ball.x < CANVAS_WIDTH/2) ? getPlayers(0) : getPlayers(1);
+    if (collision(ball,whatPlayer)){
+        // Calculamos donde golpea la pelota en la pala
+        var collidePoint = ball.y - (whatPlayer.y+whatPlayer.height/2);
+        // Normalizamos el punto de colisión
+        collidePoint = collidePoint / (whatPlayer.height/2);
+        // Calculamos el ángulo de rebote ( en radianes)
+        const angleRad = collidePoint * Math.PI/4;
+        // Calculamos el sentido de la pelota en la dirección x
+        const direction = (ball.x < CANVAS_WIDTH/2) ? 1 : -1;
+        // Calculamos la velocidad de la pelota en los ejes x e y
+        ball.velocityX = direction * ball.speed * Math.cos(angleRad);
+        ball.velocityY = ball.speed * Math.sen(angleRad);
+        // Cada vez que la bola golpea la pala, se incrementa la velicidad
+        ball.speed += BALL_DELTA_VELOCITY;
+    }
 }
 
 function render(){
     drawBoard();
-    drawPaddle(getPlayers[0]);
-    drawPaddle(getPlayers[1]);
+    drawPaddle(getPlayers(0));
+    drawPaddle(getPlayers(1));
     drawBall(ball);
     drawScore(players);
 }
