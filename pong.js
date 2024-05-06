@@ -87,15 +87,27 @@ function drawScore(players){
         drawText(players[id].score, (players[id].x === 0 ? 1 : 3) * CANVAS_WIDTH/4, CANVAS_HEIGHT/5);
     }
 }
+
+function drawPaddle(paddle){
+    drawRect(paddle.x,paddle.y,paddle.width,paddle.height,paddle.color);
+}
+function drawBall(ball){
+    drawCircle(ball.x,ball.y,ball.radius,ball.color);
+}
+// ---------------------------------------------------------
+// MOTOR DE JUEGO
+// ---------------------------------------------------------
 const CANVAS_WIDTH = cvs.width;
 const CANVAS_HEIGHT = cvs.height;
 
-
-const players = {
-    
-}
+// Declaramos los objetos del juego
+var gameState = gameStateEnum.SYNC;
+const players = {};
+var ball ={};
 // GENERIC HELPERS -------------------------
-
+function getPlayers(index){
+    return players[index];
+}
 players[0] ={
     x:0,
     y:CANVAS_HEIGHT/2 - PADDLE_HEIGHT/2,
@@ -112,9 +124,19 @@ players[1] ={
     color: PADDLE_RIGHT_COLOR,
     score: 0
 }
+ball={
+    x: CANVAS_WIDTH/2,
+    y: CANVAS_HEIGHT/2,
+    radius: BALL_RADIUS,
+    speed: BALL_VELOCITY,
+    velocityX: BALL_DELTA_VELOCITY,
+    velocityY: BALL_VELOCITY,
+    color: BALL_COLOR
+}
+
+
 drawBoard();
-
-
-drawCircle(50,60,BALL_RADIUS, BALL_COLOR);
-drawText('Saludos!!!',200,200);
+drawPaddle(getPlayers[0]);
+drawPaddle(getPlayers[1]);
+drawBall(ball);
 drawScore(players);
