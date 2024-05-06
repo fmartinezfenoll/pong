@@ -89,7 +89,7 @@ function drawScore(players){
 }
 
 function drawPaddle(paddle){
-    drawRect(paddle.x,paddle.y,paddle.width,paddle.height,paddle.color);
+    drawRect(paddle.x, paddle.y, paddle.width, paddle.height, paddle.color);
 }
 function drawBall(ball){
     drawCircle(ball.x,ball.y,ball.radius,ball.color);
@@ -105,38 +105,84 @@ var gameState = gameStateEnum.SYNC;
 const players = {};
 var ball ={};
 // GENERIC HELPERS -------------------------
+
+function getRandomDirection(){
+    return Math.floor(Math.random()*2) === 0 ? -1 : 1;
+}
 function getPlayers(index){
     return players[index];
 }
-players[0] ={
-    x:0,
-    y:CANVAS_HEIGHT/2 - PADDLE_HEIGHT/2,
-    width: PADDLE_WIDTH,
-    height: PADDLE_HEIGHT,
-    color: PADDLE_LEFT_COLOR,
-    score: 0
+function initGameObjects(){
+    players[0] ={
+        x:0,
+        y:CANVAS_HEIGHT/2 - PADDLE_HEIGHT/2,
+        width: PADDLE_WIDTH,
+        height: PADDLE_HEIGHT,
+        color: PADDLE_LEFT_COLOR,
+        score: 0
+    }
+    players[1] ={
+        x:CANVAS_WIDTH - PADDLE_WIDTH,
+        y:CANVAS_HEIGHT/2 - PADDLE_HEIGHT/2,
+        width: PADDLE_WIDTH,
+        height: PADDLE_HEIGHT,
+        color: PADDLE_RIGHT_COLOR,
+        score: 0
+    }
+    ball={
+        x: CANVAS_WIDTH/2,
+        y: CANVAS_HEIGHT/2,
+        radius: BALL_RADIUS,
+        speed: BALL_VELOCITY,
+        velocityX: BALL_VELOCITY * getRandomDirection(),
+        velocityY: BALL_VELOCITY * getRandomDirection(),
+        color: BALL_COLOR
+    }
 }
-players[1] ={
-    x:CANVAS_WIDTH - PADDLE_WIDTH,
-    y:CANVAS_HEIGHT/2 - PADDLE_HEIGHT/2,
-    width: PADDLE_WIDTH,
-    height: PADDLE_HEIGHT,
-    color: PADDLE_RIGHT_COLOR,
-    score: 0
+
+function update(){
+    console.log("Actualizando estado...");
 }
-ball={
-    x: CANVAS_WIDTH/2,
-    y: CANVAS_HEIGHT/2,
-    radius: BALL_RADIUS,
-    speed: BALL_VELOCITY,
-    velocityX: BALL_DELTA_VELOCITY,
-    velocityY: BALL_VELOCITY,
-    color: BALL_COLOR
+
+function render(){
+    drawBoard();
+    drawPaddle(getPlayers[0]);
+    drawPaddle(getPlayers[1]);
+    drawBall(ball);
+    drawScore(players);
+}
+
+function next(){
+    console.log('Siguiente estado...');
 }
 
 
-drawBoard();
-drawPaddle(getPlayers[0]);
-drawPaddle(getPlayers[1]);
-drawBall(ball);
-drawScore(players);
+// HELPERS para gestionar el bucle de juego
+
+var gameLoopId; // Identificador del bucle de juego
+
+function gameLoop(){
+    update();
+    render();
+    next();
+}
+
+function initGameLoop(){
+    gameLoopId = setInterval(gameLoop, 1000/FRAME_PER_SECOND);
+    gameState = gameStateEnum.PLAY;
+}
+
+function stopGameLoop(){
+    clearInterval(gameLoopId);
+}
+
+// INICIALIZACIÓN DEL MOTOR DE JUEGO
+
+function init(){
+    initGameObjects();
+    drawBoard();
+    initGameLoop();
+}
+
+// Inicialización del juego
+init();
