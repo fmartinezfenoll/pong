@@ -32,7 +32,26 @@ const gameStateEnum = {
     PAUSE: 2,
     END: 3,
 };
+// --------------------------------------
+// CLIENTE WebSocket del network engine
+// --------------------------------------
+// Direccion servidor web
+const WEBSOCKET_SERVER = '';
+var socket;
 
+function initServerConnection() {
+    // Iniciacmos la conexión con el servidor de websocket
+    socket = io(WEBSOCKET_SERVER);
+    //Solicitamos la incorporación del jugador
+    socket.emit('new player');
+    //indicamos como atender el mensaje de conexión del servidor (motor de red)
+    socket.on('connect', ()=>{
+        console.log(`Conexión de ${socket.id}`);
+    });
+
+    // Indicamos como actualizar el estado
+    socket.on('state', update);
+}
 
 // ---------------------------------------------------------
 // MOTOR DE JUEGO
@@ -45,137 +64,139 @@ var gameState = gameStateEnum.SYNC;
 const players = {};
 var ball ={};
 var localPlayer = {};
-// GENERIC HELPERS -------------------------
+// // GENERIC HELPERS -------------------------
 
-function getRandomDirection(){
-    return Math.floor(Math.random()*2) === 0 ? -1 : 1;
-}
-function getPlayers(index){
-    return players[index];
-}
-function initGameObjects(){
-    players[0] ={
-        x:0,
-        y:CANVAS_HEIGHT/2 - PADDLE_HEIGHT/2,
-        width: PADDLE_WIDTH,
-        height: PADDLE_HEIGHT,
-        color: PADDLE_LEFT_COLOR,
-        score: 0
-    }
-    players[1] ={
-        x:CANVAS_WIDTH - PADDLE_WIDTH,
-        y:CANVAS_HEIGHT/2 - PADDLE_HEIGHT/2,
-        width: PADDLE_WIDTH,
-        height: PADDLE_HEIGHT,
-        color: PADDLE_RIGHT_COLOR,
-        score: 0
-    }
-    ball={
-        x: CANVAS_WIDTH/2,
-        y: CANVAS_HEIGHT/2,
-        radius: BALL_RADIUS,
-        speed: BALL_VELOCITY,
-        velocityX: BALL_VELOCITY * getRandomDirection(),
-        velocityY: BALL_VELOCITY * getRandomDirection(),
-        color: BALL_COLOR
-    }
-    localPlayer= getPlayers(0);
-}
-// UPDATE HELPERS ---------------------------------------
-function newBall(init=false){
-    // Si la pelota ya estaba definida ( es un tanto), cambiamos de dirección
-    const directionX = init ? getRandomDirection() : (ball.velocityX>0 ? -1 : 1);
-    ball={
-        x: CANVAS_WIDTH/2,
-        y: CANVAS_HEIGHT/2,
-        radius: BALL_RADIUS,
-        speed: BALL_VELOCITY,
-        velocityX: BALL_VELOCITY * directionX,
-        velocityY: BALL_VELOCITY * getRandomDirection(),
-        color: BALL_COLOR
-    }
-}
-function collision(b,p){
-    // Calculamos el collider de la pelota
-    b.top = b.y - b.radius;
-    b.bottom = b.y + b.radius;
-    b.left = b.x - b.radius;
-    b.right = b.x + b.radius;
+// function getRandomDirection(){
+//     return Math.floor(Math.random()*2) === 0 ? -1 : 1;
+// }
+// function getPlayers(index){
+//     return players[index];
+// }
+// function initGameObjects(){
+//     players[0] ={
+//         x:0,
+//         y:CANVAS_HEIGHT/2 - PADDLE_HEIGHT/2,
+//         width: PADDLE_WIDTH,
+//         height: PADDLE_HEIGHT,
+//         color: PADDLE_LEFT_COLOR,
+//         score: 0
+//     }
+//     players[1] ={
+//         x:CANVAS_WIDTH - PADDLE_WIDTH,
+//         y:CANVAS_HEIGHT/2 - PADDLE_HEIGHT/2,
+//         width: PADDLE_WIDTH,
+//         height: PADDLE_HEIGHT,
+//         color: PADDLE_RIGHT_COLOR,
+//         score: 0
+//     }
+//     ball={
+//         x: CANVAS_WIDTH/2,
+//         y: CANVAS_HEIGHT/2,
+//         radius: BALL_RADIUS,
+//         speed: BALL_VELOCITY,
+//         velocityX: BALL_VELOCITY * getRandomDirection(),
+//         velocityY: BALL_VELOCITY * getRandomDirection(),
+//         color: BALL_COLOR
+//     }
+//     localPlayer= getPlayers(0);
+// }
+// // UPDATE HELPERS ---------------------------------------
+// function newBall(init=false){
+//     // Si la pelota ya estaba definida ( es un tanto), cambiamos de dirección
+//     const directionX = init ? getRandomDirection() : (ball.velocityX>0 ? -1 : 1);
+//     ball={
+//         x: CANVAS_WIDTH/2,
+//         y: CANVAS_HEIGHT/2,
+//         radius: BALL_RADIUS,
+//         speed: BALL_VELOCITY,
+//         velocityX: BALL_VELOCITY * directionX,
+//         velocityY: BALL_VELOCITY * getRandomDirection(),
+//         color: BALL_COLOR
+//     }
+// }
+// function collision(b,p){
+//     // Calculamos el collider de la pelota
+//     b.top = b.y - b.radius;
+//     b.bottom = b.y + b.radius;
+//     b.left = b.x - b.radius;
+//     b.right = b.x + b.radius;
 
-    // Calculamos el collider de la pala
-    p.top = p.y;
-    p.bottom = p.y + p.height;
-    p.left = p.x;
-    p.right = p.x + p.width;
+//     // Calculamos el collider de la pala
+//     p.top = p.y;
+//     p.bottom = p.y + p.height;
+//     p.left = p.x;
+//     p.right = p.x + p.width;
 
-    return b.right > p.left &&
-            b.bottom > p.top &&
-            b.left < p.right &&
-            b.top < p.bottom;
-}
+//     return b.right > p.left &&
+//             b.bottom > p.top &&
+//             b.left < p.right &&
+//             b.top < p.bottom;
+// }
 
-// IA del juego
-const COMPUTER_LEVEL = 0.1;
+// // IA del juego
+// const COMPUTER_LEVEL = 0.1;
 
-function updateNPC(){
-    const npc = getPlayers(1);
+// function updateNPC(){
+//     const npc = getPlayers(1);
 
-    npc.y += (ball.y - (npc.y+npc.height/2)) * COMPUTER_LEVEL;
-}
-function update(){
-    // Si no estamos en modo PLAY, saltamos la actualización
-    if(gameState != gameStateEnum.PLAY) return;
+//     npc.y += (ball.y - (npc.y+npc.height/2)) * COMPUTER_LEVEL;
+// }
+// function update(){
+//     // Si no estamos en modo PLAY, saltamos la actualización
+//     if(gameState != gameStateEnum.PLAY) return;
 
-    // Player: actualizamos la posicioón de la bola
-    ball.x += ball.velocityX;
-    ball.y += ball.velocityY;
+//     // Player: actualizamos la posicioón de la bola
+//     ball.x += ball.velocityX;
+//     ball.y += ball.velocityY;
 
-    // IA: actualizamos la posición de la computadora
-    updateNPC();
+//     // IA: actualizamos la posición de la computadora
+//     updateNPC();
 
-    // Si la poelota golpea los laterales del campo, rebotará...
-    if(ball.y+ball.radius > CANVAS_HEIGHT  ||  ball.y-ball.radius < 0){
-        ball.velocityY = -ball.velocityY;
-    }
-    // Verificamos si la pelota golpea alguna pala...
-    var whatPlayer = (ball.x < CANVAS_WIDTH/2) ? getPlayers(0) : getPlayers(1);
-    if(collision(ball, whatPlayer)){
-        //calcular el punto de colision con la pala
-        var collidePoint = ball.y - (whatPlayer.y + whatPlayer.height/2);
+//     // Si la poelota golpea los laterales del campo, rebotará...
+//     if(ball.y+ball.radius > CANVAS_HEIGHT  ||  ball.y-ball.radius < 0){
+//         ball.velocityY = -ball.velocityY;
+//     }
+//     // Verificamos si la pelota golpea alguna pala...
+//     var whatPlayer = (ball.x < CANVAS_WIDTH/2) ? getPlayers(0) : getPlayers(1);
+//     if(collision(ball, whatPlayer)){
+//         //calcular el punto de colision con la pala
+//         var collidePoint = ball.y - (whatPlayer.y + whatPlayer.height/2);
         
-        //normalizar el punto de colision
-        collidePoint = collidePoint / (whatPlayer.height/2);
+//         //normalizar el punto de colision
+//         collidePoint = collidePoint / (whatPlayer.height/2);
         
-        //calcular angulo de rebote
-        const angleRad = collidePoint * (Math.PI/4);
+//         //calcular angulo de rebote
+//         const angleRad = collidePoint * (Math.PI/4);
         
-        //calcular el sentido de la pelota en x
-        const direction = ball.x < CANVAS_WIDTH/2 ? 1 : -1;
+//         //calcular el sentido de la pelota en x
+//         const direction = ball.x < CANVAS_WIDTH/2 ? 1 : -1;
         
-        //calcular la velocidad de la pelota en x e y
-        //la velocidad se debe plasmar en sus componentes xy
-        //para ello se usa el coseno y el seno
-        ball.velocityX = direction * ball.speed * Math.cos(angleRad);
-        ball.velocityY = ball.speed * Math.sin(angleRad);
+//         //calcular la velocidad de la pelota en x e y
+//         //la velocidad se debe plasmar en sus componentes xy
+//         //para ello se usa el coseno y el seno
+//         ball.velocityX = direction * ball.speed * Math.cos(angleRad);
+//         ball.velocityY = ball.speed * Math.sin(angleRad);
         
   
-        //incrementar la velocidad
-        ball.speed += BALL_DELTA_VELOCITY;
+//         //incrementar la velocidad
+//         ball.speed += BALL_DELTA_VELOCITY;
         
-     }
+//      }
 
-    // Si la pelota se fue por la izquierda...
-    if(ball.x - ball.radius < 0){
-        console.log('Tanto para el jugador de la derecha');
-        getPlayers(1).score++;
-        newBall();
-    } else if (ball.x+ball.radius > CANVAS_WIDTH){
-        console.log('Tanto para el jugador de la izquierda');
-        getPlayers(0).score++;
-        newBall();
-    }
+//     // Si la pelota se fue por la izquierda...
+//     if(ball.x - ball.radius < 0){
+//         console.log('Tanto para el jugador de la derecha');
+//         getPlayers(1).score++;
+//         newBall();
+//     } else if (ball.x+ball.radius > CANVAS_WIDTH){
+//         console.log('Tanto para el jugador de la izquierda');
+//         getPlayers(0).score++;
+//         newBall();
+//     }
+// }
+function update(){
+    
 }
-
 function render(){
     if(gameState === gameStateEnum.PAUSE){
         drawText('PAUSA', CANVAS_WIDTH/4, CANVAS_HEIGHT/2, 'GREEN');
