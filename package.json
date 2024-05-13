@@ -1,6 +1,6 @@
 {
   "name": "pong",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Juego PONG",
   "main": "pong.js",
   "scripts": {
