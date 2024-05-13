@@ -1,0 +1,18 @@
+{
+  "name": "pong",
+  "version": "1.0.0",
+  "description": "Juego PONG",
+  "main": "pong.js",
+  "scripts": {
+    "start": "nodemon app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Francisco Martínez",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  }
+}

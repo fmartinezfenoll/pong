@@ -33,67 +33,7 @@ const gameStateEnum = {
     END: 3,
 };
 
-//--------------------------------------------
-// MOTOR GRÁFICO
-//--------------------------------------------
-// Recuperar el canvas
-const cvs = document.getElementById('pong_canvas');
-const ctx = cvs.getContext('2d');
 
-// LAYER 0: BASIC CANVAS DRAW HELPERS ---------------------------------
-
-function drawRect(x,y,w,h,color){
-    ctx.fillStyle = color;
-    ctx.fillRect(x,y,w,h);
-}
-
-function drawCircle(x,y,r,color){
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.arc(x,y,r,0,2*Math.PI,false);
-    ctx.closePath();
-    ctx.fill();
-}
-function drawText(text,x,y,color=FONT_COLOR,fontSize=FONT_SIZE,fontFamily=FONT_FAMILY){
-    ctx.fillStyle = color;
-    ctx.font = `${fontSize} ${fontFamily}`;
-    ctx.fillText(text,x,y);
-}
-// LAYER 1: BASIC PONG HELPERS ---------------------------
-function clearCanvas() {
-    drawRect(0,0, CANVAS_WIDTH, CANVAS_HEIGHT, BG_COLOR);
-}
-function drawNet(){
-    const net = {
-        x: CANVAS_WIDTH/2 - NET_WIDTH/2,
-        y: 0,
-        width: NET_WIDTH,
-        height: NET_HEIGHT,
-        padding: NET_PADDING,
-        color: NET_COLOR
-    }
-    for(let i=0; i<= CANVAS_HEIGHT;i+=net.padding){
-        drawRect(net.x, net.y+i, net.width, net.height, net.color);
-    }
-}
-
-function drawBoard(){
-    clearCanvas();
-    drawNet();
-}
-
-function drawScore(players){
-    for(let id in players){
-        drawText(players[id].score, (players[id].x === 0 ? 1 : 3) * CANVAS_WIDTH/4, CANVAS_HEIGHT/5);
-    }
-}
-
-function drawPaddle(paddle){
-    drawRect(paddle.x, paddle.y, paddle.width, paddle.height, paddle.color);
-}
-function drawBall(ball){
-    drawCircle(ball.x,ball.y,ball.radius,ball.color);
-}
 // ---------------------------------------------------------
 // MOTOR DE JUEGO
 // ---------------------------------------------------------
@@ -170,8 +110,8 @@ function collision(b,p){
 
     return b.right > p.left &&
             b.bottom > p.top &&
-            b.left > p.right &&
-            b.top > p.bottom;
+            b.left < p.right &&
+            b.top < p.bottom;
 }
 
 // IA del juego
@@ -199,21 +139,30 @@ function update(){
     }
     // Verificamos si la pelota golpea alguna pala...
     var whatPlayer = (ball.x < CANVAS_WIDTH/2) ? getPlayers(0) : getPlayers(1);
-    if (collision(ball,whatPlayer)){
-        // Calculamos donde golpea la pelota en la pala
-        var collidePoint = ball.y - (whatPlayer.y+whatPlayer.height/2);
-        // Normalizamos el punto de colisión
+    if(collision(ball, whatPlayer)){
+        //calcular el punto de colision con la pala
+        var collidePoint = ball.y - (whatPlayer.y + whatPlayer.height/2);
+        
+        //normalizar el punto de colision
         collidePoint = collidePoint / (whatPlayer.height/2);
-        // Calculamos el ángulo de rebote ( en radianes)
-        const angleRad = collidePoint * Math.PI/4;
-        // Calculamos el sentido de la pelota en la dirección x
-        const direction = (ball.x < CANVAS_WIDTH/2) ? 1 : -1;
-        // Calculamos la velocidad de la pelota en los ejes x e y
+        
+        //calcular angulo de rebote
+        const angleRad = collidePoint * (Math.PI/4);
+        
+        //calcular el sentido de la pelota en x
+        const direction = ball.x < CANVAS_WIDTH/2 ? 1 : -1;
+        
+        //calcular la velocidad de la pelota en x e y
+        //la velocidad se debe plasmar en sus componentes xy
+        //para ello se usa el coseno y el seno
         ball.velocityX = direction * ball.speed * Math.cos(angleRad);
         ball.velocityY = ball.speed * Math.sin(angleRad);
-        // Cada vez que la bola golpea la pala, se incrementa la velicidad
+        
+  
+        //incrementar la velocidad
         ball.speed += BALL_DELTA_VELOCITY;
-    }
+        
+     }
 
     // Si la pelota se fue por la izquierda...
     if(ball.x - ball.radius < 0){
@@ -292,6 +241,7 @@ function initPaddleMovement(){
 function init(){
     initGameObjects();
     drawBoard();
+    initPaddleMovement();
     initGameLoop();
 }
 
