@@ -90,16 +90,16 @@ const CANVAS_WIDTH = 600;
 const CANVAS_HEIGHT = 400;
 
 // Declaramos los objetos del juego
-var gameState = gameStateEnum.SYNC;
+let gameState = gameStateEnum.SYNC;
 const players = {};
-var ball ={};
+let ball ={};
 // GENERIC HELPERS -------------------------
 
 function getRandomDirection(){
     return Math.floor(Math.random()*2) === 0 ? -1 : 1;
 }
 function getPlayers(index){
-    var whatPlayer = undefined;
+    let whatPlayer = undefined;
 
     for (let id in players){
         if(index===0 && players[id].x===0) whatPlayer = players[id];
@@ -201,10 +201,10 @@ function update(){
         ball.velocityY = -ball.velocityY;
     }
     // Verificamos si la pelota golpea alguna pala...
-    var whatPlayer = (ball.x < CANVAS_WIDTH/2) ? getPlayers(0) : getPlayers(1);
+    let whatPlayer = (ball.x < CANVAS_WIDTH/2) ? getPlayers(0) : getPlayers(1);
     if(collision(ball, whatPlayer)){
         //calcular el punto de colision con la pala
-        var collidePoint = ball.y - (whatPlayer.y + whatPlayer.height/2);
+        let collidePoint = ball.y - (whatPlayer.y + whatPlayer.height/2);
         
         //normalizar el punto de colision
         collidePoint = collidePoint / (whatPlayer.height/2);
@@ -256,7 +256,7 @@ function next(){
 
 // HELPERS para gestionar el bucle de juego
 
-var gameLoopId; // Identificador del bucle de juego
+let gameLoopId; // Identificador del bucle de juego
 
 function gameLoop(){
     update();
