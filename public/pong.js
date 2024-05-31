@@ -36,7 +36,7 @@ const gameStateEnum = {
 // CLIENTE WebSocket del network engine
 // --------------------------------------
 // Direccion servidor web
-const WEBSOCKET_SERVER = '';
+const WEBSOCKET_SERVER = 'ws://localhost:3000'; //?¿?¿?¿? ws://localhost:3000 para sacar el hostname -> $hostname -i';
 var socket;
 
 function initServerConnection() {
@@ -195,20 +195,26 @@ var localPlayer = {};
 //     }
 // }
 function update(){
-    
+    players = gameObjects.players;
+    players[socket.id].color = 'RED';
+    ball = gameObjects.ball;
+    gameState = gameObjects.gameState;
 }
 function render(){
     if(gameState === gameStateEnum.PAUSE){
         drawText('PAUSA', CANVAS_WIDTH/4, CANVAS_HEIGHT/2, 'GREEN');
         return;
     }
-    if(gameState === gameStateEnum.PAUSE){
+    if(gameState === gameStateEnum.SYNC){
         drawText('Esperando rival...', CANVAS_WIDTH/4, CANVAS_HEIGHT/2, 'GREEN');
         return;
     }
     drawBoard();
-    drawPaddle(getPlayers(0));
-    drawPaddle(getPlayers(1));
+    //drawPaddle(getPlayers(0));
+    //drawPaddle(getPlayers(1));
+    for(let id in players){
+        drawPaddle(players[id]);
+    }
     drawBall(ball);
     drawScore(players);
     if (gameState === gameStateEnum.END){
@@ -221,10 +227,8 @@ function next(){
     if(gameState === gameStateEnum.END){
         console.log('Game Over');
         stopGameLoop();
+        socket.disconnect(); //posible
         return;
-    }
-    if ((getPlayers(0).score>=NUM_BALLS) || (getPlayers(1).score>=NUM_BALLS)){
-        gameState = gameStateEnum.END;
     }
 }
 
@@ -234,14 +238,14 @@ function next(){
 var gameLoopId; // Identificador del bucle de juego
 
 function gameLoop(){
-    update();
+    //update();
     render();
     next();
 }
 
 function initGameLoop(){
     gameLoopId = setInterval(gameLoop, 1000/FRAME_PER_SECOND);
-    gameState = gameStateEnum.PLAY;
+    //gameState = gameStateEnum.PLAY;
 }
 
 function stopGameLoop(){
@@ -255,12 +259,15 @@ function initPaddleMovement(){
         if (gameState !== gameStateEnum.PLAY){
             return;
         }
+        let localPlayer = players[socket.id];
         const rect = cvs.getBoundingClientRect();
         localPlayer.y = event.clientY - rect.top - localPlayer.height/2;
+        socket.emit('move player', localPlayer.y);
     });
 }
 function init(){
-    initGameObjects();
+    //initGameObjects();
+    initServerConection();
     drawBoard();
     initPaddleMovement();
     initGameLoop();
